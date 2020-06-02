@@ -1,7 +1,10 @@
+import { v1 as uuid } from 'uuid'
 import React from 'react'
+import { withFirebase } from 'src/services/Firebase'
 import BuildControls from '../BuildControls'
 import Burger from '../Burger'
 import Modal from '../Modal'
+import Spinner from '../Spinner'
 import { Summary as OrderSummary } from '../Order'
 
 const INGREDIENT_PRICES = {
@@ -25,7 +28,9 @@ class Builder extends React.Component {
     },
     totalPrice: 4,
     orderInvalid: true,
-    orderInProcess: false
+    orderInProcess: false,
+    submissionError: false,
+    submissionSending: false
   }
 
 
@@ -50,8 +55,41 @@ class Builder extends React.Component {
   }
 
   handleContinueOrder = () => {
-    console.log('[ORDER] continue order', { ...this.state.ingredients })
-    alert('You Continue!') // TODO
+    this.setState({
+      submissionError: false,
+      submissionSending: true
+    })
+
+    const data = {
+      orderRefId: uuid(),
+      customer: {
+        phone: '5554443210',
+        email: 'billy@example.com',
+        name: 'Billy Mays'
+      },
+      deliveryPreference: 'fastest',
+      ingredients: this.state.ingredients,
+      totalPrice: this.state.totalPrice,
+      createdAt: this.props.firebase.fieldValue.serverTimestamp(),
+    }
+
+    // console.log('[ORDER] begin order submit', data)
+    // this.props.firebase.orders()
+    // .add(data)
+    // .then(docRef => {
+    //   console.log('[ORDER] order submit complete', { orderId: docRef.id })
+    //   this.setState({
+    //     orderInProcess: false,
+    //     submissionSending: false
+    //   })
+    // })
+    // .catch(error => {
+    //   console.error('[ORDER] order submit failed', error)
+    //   this.setState({
+    //     submissionError: true,
+    //     submissionSending: false
+    //   })
+    // })
   }
 
   handleAddIngredient = (type) => {
@@ -112,12 +150,16 @@ class Builder extends React.Component {
           show={this.state.orderInProcess}
           onCancelOrder={this.handleCancelOrder}
         >
-          <OrderSummary
-            totalPrice={this.state.totalPrice}
-            ingredients={this.state.ingredients}
-            onCancelOrder={this.handleCancelOrder}
-            onContinueOrder={this.handleContinueOrder}
-          />
+          {this.state.submissionSending ? (
+            <Spinner />
+          ) : (
+            <OrderSummary
+              totalPrice={this.state.totalPrice}
+              ingredients={this.state.ingredients}
+              onCancelOrder={this.handleCancelOrder}
+              onContinueOrder={this.handleContinueOrder}
+            />
+          )}
         </Modal>
         <Burger ingredients={this.state.ingredients} />
         <BuildControls
@@ -133,4 +175,4 @@ class Builder extends React.Component {
   }
 }
 
-export default Builder
+export default withFirebase(Builder)

@@ -26,5 +26,6 @@ export default React.memo(
   // re-render order summary only
   // when `props.show` changes
   (prevProps, nextProps) =>
-    prevProps.show === nextProps.show
+    prevProps.show === nextProps.show &&
+    prevProps.children === nextProps.children
 )
