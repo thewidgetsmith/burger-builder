@@ -1,13 +1,25 @@
 import React from 'react'
-import styles from './Main.module.css'
+import { NavigationDrawer } from 'src/components'
 
-const Main = (props) => (
-  <>
-    <div>Toolbar, Drawer, Backdrop</div>
-    <main className={styles.Content}>
-      {props.children}
-    </main>
-  </>
-)
+import TopBar from './TopBar'
+import classes from './Main.module.css'
+
+const Main = (props) => {
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false)
+  const handleDrawerToggle = () => setIsDrawerOpen(!isDrawerOpen)
+
+  return (
+    <>
+      <TopBar handleToggleDrawer={handleDrawerToggle} />
+      <NavigationDrawer
+        isOpen={isDrawerOpen}
+        onToggle={handleDrawerToggle}
+      />
+      <main className={classes.Content}>
+        {props.children}
+      </main>
+    </>
+  )
+}
 
 export default Main

@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import Ingredient from '../Ingredient'
-import styles from './Burger.module.css'
+import classes from './Burger.module.css'
 
 const Burger = ({ ingredients }) => {
   const transformedIngredients = Object.keys(ingredients)
@@ -18,10 +18,10 @@ const Burger = ({ ingredients }) => {
     transformedIngredients.push(<p key='add-0'>Please start adding ingredients!</p>)
   }
 
-  console.log('TRANSfORMED', transformedIngredients)
+  // console.log('TRANSfORMED', transformedIngredients)
 
   return (
-    <div className={styles.Burger}>
+    <div className={classes.Burger}>
       <Ingredient type='bread-top' />
       {transformedIngredients}
       <Ingredient type='bread-bottom' />
