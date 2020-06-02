@@ -28,6 +28,7 @@ class Builder extends React.Component {
     orderInProcess: false
   }
 
+
   validateOrderState = (ingredients) => {
     const total = Object.keys(ingredients)
       .map(key => ingredients[key])
