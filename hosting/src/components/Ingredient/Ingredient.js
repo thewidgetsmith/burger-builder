@@ -16,22 +16,22 @@ const Ingredient = ({ type }) => {
         </div>
       )
       break
-    case ('meat'):
+    case ('beef_qtrlb'):
       ingredient = <div className={classes.Meat} />
       break
-    case ('cheese'):
+    case ('cheese_american'):
       ingredient = <div className={classes.Cheese} />
       break
-    case ('bacon'):
+    case ('bacon_american'):
       ingredient = <div className={classes.Bacon} />
       break
-    case ('salad'):
+    case ('lettuce_romaine'):
       ingredient = <div className={classes.Salad} />
       break
-    case ('pickle'):
+    case ('pickle_dill'):
       ingredient = <div className={classes.Pickle} />
       break
-    case ('pastrami'):
+    case ('pastrami_beef'):
       ingredient = <div className={classes.Pastrami} />
       break
     default:

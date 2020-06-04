@@ -3,23 +3,25 @@ import PropTypes from 'prop-types'
 import classes from './BuildControl.module.css'
 
 const BuildControl = ({
-  removeBtnIsDisabled,
-  ingredientLabel,
-  onRemoveClick,
-  onAddClick
+  lessBtnIsDisabled,
+  moreBtnIsDisabled,
+  onLessClick,
+  onMoreClick,
+  label
 }) => (
   <div className={classes.BuildControl}>
-    <div className={classes.Label}>{ingredientLabel}</div>
+    <div className={classes.Label}>{label}</div>
     <button
       className={classes.Less}
-      onClick={onRemoveClick}
-      disabled={removeBtnIsDisabled}
+      disabled={lessBtnIsDisabled}
+      onClick={onLessClick}
     >
       Less
     </button>
     <button
       className={classes.More}
-      onClick={onAddClick}
+      disabled={moreBtnIsDisabled}
+      onClick={onMoreClick}
     >
       More
     </button>
@@ -27,14 +29,16 @@ const BuildControl = ({
 )
 
 BuildControl.defaultProps = {
-  removeBtnIsDisabled: false
+  lessBtnIsDisabled: false,
+  moreBtnIsDisabled: false
 }
 
 BuildControl.propTypes = {
-  removeBtnIsDisabled: PropTypes.bool,
-  ingredientLabel: PropTypes.string.isRequired,
-  onRemoveClick: PropTypes.func.isRequired,
-  onAddClick: PropTypes.func.isRequired
+  lessBtnIsDisabled: PropTypes.bool,
+  moreBtnIsDisabled: PropTypes.bool,
+  onLessClick: PropTypes.func.isRequired,
+  onMoreClick: PropTypes.func.isRequired,
+  label: PropTypes.string.isRequired
 }
 
 export default BuildControl

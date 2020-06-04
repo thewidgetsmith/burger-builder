@@ -9,18 +9,22 @@ const styles = {
 }
 
 const OrderSummary = ({
+  onContinueOrder,
+  onCancelOrder,
   ingredients,
   totalPrice,
-  onCancelOrder,
-  onContinueOrder
+  selections
 }) => {
-  const ingSummary = Object.keys(ingredients)
-    .map((key, indx) => (
-      <li key={indx}>
-        <span style={styles.item}>{key}</span>:
-        {ingredients[key]}
-      </li>
-    ))
+  const ingSummary = Object.keys(selections)
+    .map((key, indx) => {
+      const ing = ingredients.find(it => it.name === key)
+      return (
+        <li key={indx}>
+          <span style={styles.item}>{ing.label}</span>:
+          {selections[key]}
+        </li>
+      )
+    })
 
   React.useEffect(() => {
     console.log('[PROFILE] order summary updated')
@@ -42,13 +46,14 @@ const OrderSummary = ({
 }
 
 OrderSummary.defaultProps = {
-  ingredients: {},
+  selections: {},
   totalPrice: 0.0
 }
 
 OrderSummary.propTypes = {
-  ingredients: PropTypes.object,
+  selections: PropTypes.object,
   totalPrice: PropTypes.number,
+  ingredients: PropTypes.array.isRequired,
   onCancelOrder: PropTypes.func.isRequired,
   onContinueOrder: PropTypes.func.isRequired
 }

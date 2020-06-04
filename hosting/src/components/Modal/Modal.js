@@ -3,12 +3,12 @@ import Backdrop from '../Backdrop'
 import classes from './Modal.module.css'
 
 const Modal = ({
-  onCancelOrder,
+  onBackdropClick,
   children,
   show
 }) => (
   <>
-    <Backdrop show={show} onClick={onCancelOrder} />
+    <Backdrop show={show} onClick={onBackdropClick} />
     <div
       className={classes.Modal}
       style={{

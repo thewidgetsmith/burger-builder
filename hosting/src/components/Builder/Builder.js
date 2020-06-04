@@ -1,42 +1,33 @@
-import { v1 as uuid } from 'uuid'
 import React from 'react'
+import { v1 as uuid } from 'uuid'
+import { compose } from 'recompose'
 import { withFirebase } from 'src/services/Firebase'
+import { withErrorHandler } from 'src/services/Error'
 import BuildControls from '../BuildControls'
 import Burger from '../Burger'
 import Modal from '../Modal'
 import Spinner from '../Spinner'
 import { Summary as OrderSummary } from '../Order'
 
-const INGREDIENT_PRICES = {
-  pickle: 0.05,
-  salad: 0.5,
-  cheese: 0.4,
-  meat: 1.3,
-  bacon: 0.7,
-  pastrami: 1.5
-}
+const BASE_PRICE = 4
 
 class Builder extends React.Component {
   state = {
-    ingredients: {
-      pickle: 0,
-      salad: 0,
-      bacon: 0,
-      pastrami: 0,
-      cheese: 0,
-      meat: 0
+    order: {
+      selections: {},
+      totalPrice: 0
     },
-    totalPrice: 4,
-    orderInvalid: true,
+    ingredients: [],
+    orderInvalid: false,
     orderInProcess: false,
     submissionError: false,
     submissionSending: false
   }
 
 
-  validateOrderState = (ingredients) => {
-    const total = Object.keys(ingredients)
-      .map(key => ingredients[key])
+  validateOrderState = (order) => {
+    const total = Object.keys(order.selections)
+      .map(key => order.selections[key])
       .reduce((sum, it) => sum + it, 0)
 
     const orderInvalid = total < 1
@@ -68,111 +59,156 @@ class Builder extends React.Component {
         name: 'Billy Mays'
       },
       deliveryPreference: 'fastest',
-      ingredients: this.state.ingredients,
-      totalPrice: this.state.totalPrice,
+      order: this.state.order.selections,
+      totalPrice: this.state.order.totalPrice,
       createdAt: this.props.firebase.fieldValue.serverTimestamp(),
     }
 
-    // console.log('[ORDER] begin order submit', data)
-    // this.props.firebase.orders()
-    // .add(data)
-    // .then(docRef => {
-    //   console.log('[ORDER] order submit complete', { orderId: docRef.id })
-    //   this.setState({
-    //     orderInProcess: false,
-    //     submissionSending: false
-    //   })
-    // })
-    // .catch(error => {
-    //   console.error('[ORDER] order submit failed', error)
-    //   this.setState({
-    //     submissionError: true,
-    //     submissionSending: false
-    //   })
-    // })
-  }
-
-  handleAddIngredient = (type) => {
-    const oldCount = this.state.ingredients[type]
-    const oldPrice = this.state.totalPrice
-
-    const priceAddition = INGREDIENT_PRICES[type]
-    const newPrice = oldPrice + priceAddition
-
-    const updatedCount = oldCount + 1
-    const updatedIngredients = {
-      ...this.state.ingredients
-    }
-    updatedIngredients[type] = updatedCount
-
-    this.setState({
-      totalPrice: newPrice,
-      ingredients: updatedIngredients
+    console.log('[ORDER] begin order submit', data)
+    this.props.firebase.orders()
+    .add(data)
+    .then(docRef => {
+      console.log('[ORDER] order submit complete', { orderId: docRef.id })
+      this.setState({
+        orderInProcess: false,
+        submissionSending: false
+      })
     })
-
-    this.validateOrderState(updatedIngredients)
+    .catch(error => {
+      console.error('[ORDER] order submit failed', error)
+      this.setState({
+        submissionError: true,
+        submissionSending: false
+      })
+    })
   }
 
-  handleRemoveIngredient = (type) => {
-    const oldCount = this.state.ingredients[type]
-    const oldPrice = this.state.totalPrice
+  handleMoreIngredientPress = (ing) => {
+    // selections may not have an entry for each ingredient
+    const oldCount = this.state.order.selections[ing] || 0
+    const oldPrice = this.state.order.totalPrice
+    const ingredient = this.state.ingredients.find(it => it.name === ing)
+    // TODO: what happens if the ingredient is not found?
+
+    const newPrice = oldPrice + ingredient.price
+    const updatedCount = oldCount + 1
+    const updatedOrder = {
+      ...this.state.order
+    }
+    updatedOrder.selections[ing] = updatedCount
+    updatedOrder.totalPrice = newPrice
+
+    this.setState({ order: updatedOrder })
+    this.validateOrderState(updatedOrder)
+  }
+
+  handleLessIngredientPress = (ing) => {
+    // selections may not have an entry for each ingredient
+    const oldCount = this.state.order.selections[ing] || 0
+    const oldPrice = this.state.order.totalPrice
+    const ingredient = this.state.ingredients.find(it => it.name === ing)
+    // TODO: what happens if the ingredient is not found?
 
     if (oldCount <= 0) {
       return
     }
 
-    const priceDeduction = INGREDIENT_PRICES[type]
-    const newPrice = oldPrice - priceDeduction
-
+    const newPrice = oldPrice - ingredient.price
     const updatedCount = oldCount - 1
-    const updatedIngredients = {
-      ...this.state.ingredients
+    const updatedOrder = {
+      ...this.state.order
     }
-    updatedIngredients[type] = updatedCount
+    updatedOrder.selections[ing] = updatedCount
+    updatedOrder.totalPrice = newPrice
 
-    this.setState({
-      totalPrice: newPrice,
-      ingredients: updatedIngredients
-    })
+    this.setState({ order: updatedOrder })
+    this.validateOrderState(updatedOrder)
+  }
 
-    this.validateOrderState(updatedIngredients)
+  componentDidMount () {
+    if (this.state.ingredients.length === 0) {
+      console.log('[BUILDER] ingredients list empty, begin fetch ingredients')
+      this.props.firebase.ingredients()
+      .where('status', '==', 'ACTIVE')
+      .get()
+      .then((snapshot) => {
+        console.log('[BUILDER] ingredients list fetched, load builder')
+        const ingredients = []
+        snapshot.forEach(doc => {
+          ingredients.push(doc.data())
+        })
+
+        this.setState({ ingredients })
+        return ingredients
+      })
+      .then((ingredients) => {
+        const defaults = ingredients.filter(it => it.qtyDef > 0)
+        const selections = defaults.reduce((obj, it) =>
+          ({ ...obj, [it.name]: it.qtyDef }), {})
+        const totalPrice = defaults.reduce((sum, it) =>
+          sum + (it.qtyDef * it.price), BASE_PRICE)
+
+        this.setState({
+          order: {
+            selections,
+            totalPrice
+          }
+        })
+      })
+      .catch((error) => {
+        console.error('[BUILDER] error when fetching ingredients', error)
+      })
+    }
   }
 
   render () {
-    const disabledInfo = { ...this.state.ingredients }
-    for (const key in disabledInfo) {
-      disabledInfo[key] = disabledInfo[key] <= 0
+    const quantities = this.state.ingredients.reduce(
+      (acc, it) => ({ ...acc, [it.name]: it }), {})
+    const lessDisabledInfo = {}
+    const moreDisabledInfo = {}
+    for (const key in quantities) {
+      const qtyIng = this.state.order.selections[key] || 0
+      lessDisabledInfo[key] = qtyIng <= quantities[key].qtyMin
+      moreDisabledInfo[key] = qtyIng >= quantities[key].qtyMax
     }
 
     return (
       <>
         <Modal
           show={this.state.orderInProcess}
-          onCancelOrder={this.handleCancelOrder}
+          onBackdropClick={this.handleCancelOrder}
         >
           {this.state.submissionSending ? (
             <Spinner />
           ) : (
             <OrderSummary
-              totalPrice={this.state.totalPrice}
-              ingredients={this.state.ingredients}
               onCancelOrder={this.handleCancelOrder}
               onContinueOrder={this.handleContinueOrder}
+              selections={this.state.order.selections}
+              totalPrice={this.state.order.totalPrice}
+              ingredients={this.state.ingredients}
             />
           )}
         </Modal>
-        <Burger ingredients={this.state.ingredients} />
+        <Burger selections={this.state.order.selections} />
         <BuildControls
-          onRemoveIngredientClick={this.handleRemoveIngredient}
-          onAddIngredientClick={this.handleAddIngredient}
+          onLessIngredientClick={this.handleLessIngredientPress}
+          onMoreIngredientClick={this.handleMoreIngredientPress}
           onOrderButtonClick={this.handleProcessOrder}
+          lessDisabledInfo={lessDisabledInfo}
+          moreDisabledInfo={moreDisabledInfo}
           orderIsInvalid={this.state.orderInvalid}
-          price={this.state.totalPrice}
-          disabled={disabledInfo}
+          totalPrice={this.state.order.totalPrice}
+          ingredients={this.state.ingredients}
         />
       </>
     )
   }
 }
 
-export default withFirebase(Builder)
+const enhance = compose(
+  withErrorHandler,
+  withFirebase
+)
+
+export default enhance(Builder)

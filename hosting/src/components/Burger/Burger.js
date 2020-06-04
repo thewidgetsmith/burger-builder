@@ -3,22 +3,20 @@ import PropTypes from 'prop-types'
 import Ingredient from '../Ingredient'
 import classes from './Burger.module.css'
 
-const Burger = ({ ingredients }) => {
-  const transformedIngredients = Object.keys(ingredients)
+const Burger = ({ selections }) => {
+  const transformedIngredients = Object.keys(selections)
     .map(key =>
-      [...Array(ingredients[key])].map((_, i) => (
+      [...Array(selections[key])].map((_, i) => (
         <Ingredient key={`${key}-${i}`} type={key} />
       ))
     )
-    .reduce((arr, el) => {
-      return arr.concat(el)
-    }, [])
+    .reduce((arr, el) => arr.concat(el), [])
 
   if (transformedIngredients.length === 0) {
     transformedIngredients.push(<p key='add-0'>Please start adding ingredients!</p>)
   }
 
-  // console.log('TRANSfORMED', transformedIngredients)
+  console.log('TRANSfORMED', transformedIngredients)
 
   return (
     <div className={classes.Burger}>
@@ -30,9 +28,7 @@ const Burger = ({ ingredients }) => {
 }
 
 Burger.propTypes = {
-  ingredients: PropTypes.shape({
-
-  }).isRequired
+  selections: PropTypes.object.isRequired
 }
 
 export default Burger

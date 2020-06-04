@@ -106,23 +106,29 @@ class Firebase {
       }
     })
 
-  // *** User API ***
+  // *** Ingredients API ***
 
-  user = uid => this.firestore.doc(`users/${uid}`)
+  ingredient = id => this.firestore.doc(`ingredients/${id}`)
 
-  users = () => this.firestore.collection('users')
+  ingredients = () => this.firestore.collection('ingredients')
 
   // *** Message API ***
 
-  message = uid => this.firestore.doc(`messages/${uid}`)
+  message = id => this.firestore.doc(`messages/${id}`)
 
   messages = () => this.firestore.collection('messages')
 
   // *** Orders API ***
 
-  order = oid => this.firestore.doc(`orders/${oid}`)
+  order = id => this.firestore.doc(`orders/${id}`)
 
   orders = () => this.firestore.collection('orders')
+
+  // *** User API ***
+
+  user = id => this.firestore.doc(`users/${id}`)
+
+  users = () => this.firestore.collection('users')
 }
 
 export default Firebase
